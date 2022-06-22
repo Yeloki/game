@@ -3,8 +3,12 @@
     "id": 0,
     "name": "stone",
     "type": "texture",
-    "filename": "stone.png",
-    "size-type": "square",
-    "px-size": 64
+    "filename": "stone.png"
+  },
+  {
+    "id": 1,
+    "name": "block-types",
+    "type": "type",
+    "filename": "block-types.json"
   }
 ]

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <set>
 #include <json.hpp>
+#include <utility>
 #include "core.hpp"
 //#include <BS_thread_pool.hpp>
 
@@ -11,21 +12,21 @@ namespace core {
 
   class Block {
   public:
-    enum class BlockType {
-      STONE,
-      WATER,
-    };
 
     Block() {
-      m_type = BlockType::STONE;
+      m_type = "stone";
     }
 
-    explicit Block(BlockType type) {
-      m_type = type;
+    explicit Block(std::string b_t) {
+      m_type = std::move(b_t);
+    }
+
+    const std::string &getType() const {
+      return m_type;
     }
 
   private:
-    BlockType m_type;
+    std::string m_type;
   }; // end class Block
 
   class Chunk {
@@ -41,6 +42,16 @@ namespace core {
     }
 
     Block &operator[](v2 pos) {
+      int y = pos.y % static_cast<int>(m_chunk_size);
+      y = (y + static_cast<int>(m_chunk_size)) % static_cast<int>(m_chunk_size);
+
+      int x = pos.x % static_cast<int>(m_chunk_size);
+      x = (x + static_cast<int>(m_chunk_size)) % static_cast<int>(m_chunk_size);
+
+      return m_data[y][x];
+    }
+
+    const Block &operator[](v2 pos) const {
       int y = pos.y % static_cast<int>(m_chunk_size);
       y = (y + static_cast<int>(m_chunk_size)) % static_cast<int>(m_chunk_size);
 
@@ -70,6 +81,26 @@ namespace core {
     void saveMap(const std::string &filename) {}
 
     void generateMap(int map_size, int chunk_size) {}
+
+    Chunk &operator[](v2 pos) {
+      int y = pos.y / static_cast<int>(m_size);
+      y = (y + static_cast<int>(m_size)) / static_cast<int>(m_size);
+
+      int x = pos.x / static_cast<int>(m_size);
+      x = (x + static_cast<int>(m_size)) / static_cast<int>(m_size);
+
+      return m_data[y][x];
+    }
+
+    const Chunk &operator[](v2 pos) const {
+      int y = pos.y / static_cast<int>(m_size);
+      y = (y + static_cast<int>(m_size)) / static_cast<int>(m_size);
+
+      int x = pos.x / static_cast<int>(m_size);
+      x = (x + static_cast<int>(m_size)) / static_cast<int>(m_size);
+
+      return m_data[y][x];
+    }
 
   private:
     int m_size;
