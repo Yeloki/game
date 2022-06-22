@@ -1,0 +1,10 @@
+[
+  {
+    "id": 0,
+    "name": "stone",
+    "type": "texture",
+    "filename": "stone.png",
+    "size-type": "square",
+    "px-size": 64
+  }
+]
