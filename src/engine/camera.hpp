@@ -8,6 +8,10 @@
 #include "assets_manager.hpp"
 #include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/View.hpp>
+#include "logger.hpp"
+#include <iostream>
+
 
 using namespace graphic;
 
@@ -17,60 +21,70 @@ namespace core {
   class Camera {
   public:
     Camera() {
-      m_size = {60 + 1, 40 + 1};
-      m_sprite_size = 128;
-      m_scale = -2;
-      m_sprite_map.resize(m_size.y, std::vector<sf::Sprite>{static_cast<size_t>(m_size.x)});
-      m_sprite_map.shrink_to_fit();
-      for (auto &c: m_sprite_map)
-        c.shrink_to_fit();
-//      for (int y(0); y < m_size.y; ++y) {
-//        for (int x(0); x < m_size.x; ++x) {
-//          m_sprite_map[y][x].setRect({})
-//        }
-//      }
+      m_scale = 0;
+      m_view = Window::getWindow()->getRenderWindow().getDefaultView();
+      m_view.move(-m_view.getSize().x / 2, -m_view.getSize().y / 2);
+      Window::getWindow()->getRenderWindow().setView(m_view);
     }
-
 
     void update(const sf::Event &event) {
+      std::cout << "View center: " << m_view.getCenter() << std::endl;
+      if (event.type == sf::Event::MouseButtonPressed) { // camera movement
+        m_mouse_pos = {event.mouseButton.x, event.mouseButton.y};
+        m_is_mouse_pressed = true;
+      } else if (event.type == sf::Event::MouseButtonReleased) {
+        m_is_mouse_pressed = false;
+      } else if (event.type == sf::Event::MouseMoved && m_is_mouse_pressed) {
+        float x_move_on = (m_mouse_pos.x - event.mouseMove.x) * pow(2, -m_scale);
+        float y_move_on = (m_mouse_pos.y - event.mouseMove.y) * pow(2, -m_scale);
+        m_view.move(x_move_on, y_move_on);
+        m_mouse_pos = {event.mouseMove.x, event.mouseMove.y};
+        applyToWindow();
+      } else if (event.type == sf::Event::MouseWheelMoved) { // camera zoom
+        if (event.mouseWheel.delta > 0 && min_scale > m_scale ||
+            event.mouseWheel.delta < 0 && max_scale < m_scale) { // if zoom available
 
-    }
+          sf::Vector2f w_size = static_cast<sf::Vector2f>(Window::getWindow()->getRenderWindow().getSize());
+          double delta_x = event.mouseWheel.x - w_size.x / 2;
+          double delta_y = event.mouseWheel.y - w_size.y / 2;
+          std::cout << "Delta X: " << delta_x << std::endl;
+          double x_move_on = (delta_x * (1 - pow(2, -event.mouseWheel.delta * scale_step))) * pow(2, -m_scale);
+          double y_move_on = (delta_y * (1 - pow(2, -event.mouseWheel.delta * scale_step))) * pow(2, -m_scale);
 
-    void render(const Map &map) {
-      for (int y(-m_size.y / 2); y < m_size.y / 2; ++y) {
-        for (int x(-m_size.x / 2); x < m_size.x / 2; ++x) {
-          const std::string &block_type = map[{x, y}][{x, y}].getType();
-          m_sprite_map[y + m_size.y / 2][x + m_size.x / 2].setTexture(AssetsManager::getAssetsManager()[block_type]);
-          m_sprite_map[y + m_size.y / 2][x + m_size.x / 2].setScale({powf(2, m_scale), powf(2, m_scale)});
+          m_scale += event.mouseWheel.delta * scale_step;
+          m_view.zoom(pow(2, -event.mouseWheel.delta * scale_step));
+          m_view.move(x_move_on, y_move_on);
+          applyToWindow();
         }
       }
     }
 
-//    void draw() {
-//      for (int y(0); y < m_size.y; ++y) {
-//        for (int x(0); x < m_size.x; ++x) {
-//          // wrong
-//          Window::getWindow()->getRenderWindow().draw();
-//        }
-//      }
-//    }
-
-    void upscale() {
-      m_scale = std::min(max_scale, m_scale + 1);
-    }
-
-    void downscale() {
-      m_scale = std::max(min_scale, m_scale - 1);
+    void applyToMap(Map *game_map) {
+      m_game_map = game_map;
     }
 
   private:
+    void applyToWindow() {
+      correctPosition();
+      Window::getWindow()->getRenderWindow().setView(m_view);
+    }
+
+
+    void correctPosition() {
+      sf::Vector2f center = m_view.getCenter();
+      sf::Vector2f map_px_size = m_game_map->getMapPXSize();
+      m_view.setCenter(std::min(std::max(center.x ,-map_px_size.x / 2), map_px_size.x / 2),
+                       std::min(std::max(center.y ,-map_px_size.y / 2), map_px_size.y / 2));
+    }
+
     // min val = -5, max val = 5
-    static constexpr int min_scale{-2};
-    static constexpr int max_scale{2};
-    int m_scale = 0;
-    v2 m_center{0, 0}; // from map
-    std::vector<std::vector<sf::Sprite>> m_sprite_map;
-    int m_sprite_size;
-    v2 m_size;
+    static constexpr double min_scale{1};
+    static constexpr double max_scale{-1};
+    static constexpr double scale_step{0.2};
+    double m_scale = 0;
+    sf::View m_view;
+    sf::Vector2i m_mouse_pos;
+    bool m_is_mouse_pressed{false};
+    Map* m_game_map= nullptr;
   };
 }

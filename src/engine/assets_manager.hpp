@@ -25,7 +25,7 @@ namespace core {
     }
 
   private:
-    AssetsManager(const std::string &filename) {
+    explicit AssetsManager(const std::string &filename) {
       loadFromFile(filename);
     }
 
