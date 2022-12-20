@@ -1,0 +1,6 @@
+[submodule "submodules/json"]
+	path = submodules/json
+	url = https://github.com/nlohmann/json
+[submodule "submodules/thread_pool"]
+	path = submodules/thread_pool
+	url = https://github.com/bshoshany/thread-pool
