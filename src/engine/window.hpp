@@ -48,14 +48,6 @@ class Window {
     return m_is_done;
   }
 
-  void doDone() {
-    m_is_done = true;
-  }
-
-  bool isFullscreen() const {
-    return m_is_fullscreen;
-  }
-
   void update(const sf::Event &event) {
     if (event.type == sf::Event::Closed) {
       m_is_done = true;

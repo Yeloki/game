@@ -18,6 +18,7 @@ set(engine_dir src/engine)
 set(SRC ${engine_dir}/map.hpp ${engine_dir}/window.hpp)
 set(SRC ${SRC} ${engine_dir}/core.hpp ${engine_dir}/camera.hpp)
 set(SRC ${SRC} ${engine_dir}/logger.hpp ${engine_dir}/assets_manager.hpp)
+set(SRC ${SRC} ${engine_dir}/gui.hpp ${engine_dir}/widget.hpp ${engine_dir}/state.hpp)
 
 # old_game code
 set(game_dir src/game)
@@ -32,3 +33,8 @@ add_executable(game src/main.cpp ${SRC})
 
 # libs (maybe I can drag it up)
 target_link_libraries(game sfml-graphics sfml-audio)
+
+add_custom_command(TARGET game POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:game> $<TARGET_FILE_DIR:game>
+        COMMAND_EXPAND_LISTS
+        )
