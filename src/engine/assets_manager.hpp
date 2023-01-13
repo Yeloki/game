@@ -6,22 +6,30 @@
 #include <SFML/Graphics/Texture.hpp>
 
 namespace core {
+
+struct ButtonStyle {
+  std::string type;
+  std::string common;
+  std::string hover;
+  std::string pressed;
+};
+
 // need add AM request class
 
 class AssetsManager {
  public:
   static AssetsManager *init(const std::string &filename) {
-    if (!instance)
-      instance = new AssetsManager(filename);
-    return instance;
+    if (!instance_)
+      instance_ = new AssetsManager(filename);
+    return instance_;
   }
 
   static AssetsManager &getAssetsManager() {
-    return (*instance); // if some problem - check this
+    return (*instance_); // if some problem - check this
   }
 
   sf::Texture &operator[](const std::string &texture_name) {
-    return m_texture_data[texture_name];
+    return texture_data_[texture_name];
   }
 
  private:
@@ -35,17 +43,16 @@ class AssetsManager {
     fin >> file;
 
     for (const auto &obj: file) {
-      if (obj["type"] == "texture") {
-        sf::Image img;
-        m_texture_data[obj["name"]].loadFromFile(
-            filename + static_cast<std::string>(obj["filename"]));
-      }
+      sf::Image img;
+      texture_data_[obj["name"]].loadFromFile(
+          filename + static_cast<std::string>(obj["filename"]));
     }
   }
 
-  static AssetsManager *instance;
-  std::unordered_map<std::string, sf::Texture> m_texture_data;
+  static AssetsManager *instance_;
+  std::unordered_map<std::string, sf::Texture> texture_data_;
+  std::unordered_map<std::string, sf::Texture> button_styles_;
 };
 
-AssetsManager *AssetsManager::instance = nullptr;
+AssetsManager *AssetsManager::instance_ = nullptr;
 }

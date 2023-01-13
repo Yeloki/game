@@ -3,5 +3,10 @@
     "id": 0,
     "name": "stone",
     "filename": "stone.png"
+  },
+  {
+    "id": 1,
+    "name": "btn-green",
+    "filename": "../images/red_btn.png"
   }
 ]

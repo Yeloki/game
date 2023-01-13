@@ -23,20 +23,25 @@ class Camera {
     m_scale = 0;
     m_view = sf::View();
     m_view.setSize(1920, 1080);
-    m_view.move(-m_view.getSize().x / 2, -m_view.getSize().y / 2);
+    m_view.move(0, 0);
     Window::getWindow()->getRenderWindow().setView(m_view);
   }
 
   void update(const sf::Event &event) {
+    m_map->update(event, m_view);
 
-    if (event.type == sf::Event::MouseButtonPressed) { // camera movement
+    if (event.type == sf::Event::MouseButtonPressed &&
+        event.mouseButton.button == sf::Mouse::Left) { // camera movement
       m_mouse_pos = {event.mouseButton.x, event.mouseButton.y};
       m_is_mouse_pressed = true;
 
-    } else if (event.type == sf::Event::MouseButtonReleased) {
+    }
+    if (event.type == sf::Event::MouseButtonReleased &&
+        event.mouseButton.button == sf::Mouse::Left) {
       m_is_mouse_pressed = false;
 
-    } else if (event.type == sf::Event::MouseMoved && m_is_mouse_pressed) {
+    }
+    if (event.type == sf::Event::MouseMoved && m_is_mouse_pressed) {
 
       double x_move_on =
           (m_mouse_pos.x - event.mouseMove.x) * (pow(2, -m_scale));
@@ -48,7 +53,8 @@ class Camera {
       m_mouse_pos = {event.mouseMove.x, event.mouseMove.y};
       applyToWindow();
 
-    } else if (event.type == sf::Event::MouseWheelMoved) { // camera zoom
+    }
+    if (event.type == sf::Event::MouseWheelMoved) { // camera zoom
       // if zoom available
       if (event.mouseWheel.delta > 0 && min_scale > m_scale ||
           event.mouseWheel.delta < 0 && max_scale < m_scale) {
@@ -76,7 +82,9 @@ class Camera {
         applyToWindow();
 
       }
-    } else if (event.type == sf::Event::Resized) {
+    }
+
+    if (event.type == sf::Event::Resized) {
       m_view.setSize(static_cast<float>(event.size.width),
                      static_cast<float>(event.size.height));
       applyToWindow();
@@ -107,7 +115,7 @@ class Camera {
 
   // min val = -5, max val = 5
   static constexpr double min_scale{1};
-  static constexpr double max_scale{-1};
+  static constexpr double max_scale{-2};
   static constexpr double scale_step{0.2};
 
   double m_scale = 0;

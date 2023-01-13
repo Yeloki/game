@@ -6,6 +6,7 @@
 #include <utility>
 #include "core.hpp"
 #include <SFML/Graphics/RectangleShape.hpp>
+#include "runtime_config.hpp"
 #include <array>
 //#include <BS_thread_pool.hpp>
 
@@ -46,9 +47,6 @@ class Block {
                           static_cast<float>(world_pos.y * m_size - fix.y)});
 
     m_sprite.setTexture(AssetsManager::getAssetsManager()[m_type]);
-    std::cout << "Sprite with WP: "
-              << world_pos << " has px cords: "
-              << m_sprite.getPosition() << std::endl;
     const int thickness = 5;
     rect.setSize({static_cast<float>(m_size - thickness * 2), static_cast<float>(m_size - thickness * 2)});
     rect.setPosition(m_sprite.getPosition() + sf::Vector2f{thickness, thickness});
@@ -181,7 +179,8 @@ class Map {
     return total_alive;
   }
 
-  void update() {
+  void simulate() {
+
     const bool new_general_index = !map_general_index;
     for (int y(0); y < m_size; ++y) {
       for (int x(0); x < m_size; ++x) {
@@ -190,15 +189,52 @@ class Map {
         if (m_data[map_general_index * m_size * m_size + y * m_size + x].IsAlive()) {
           m_data[new_general_index * m_size * m_size + y * m_size + x]
               .SetStatus(cnt == 2 || cnt == 3);
+
         } else {
           m_data[new_general_index * m_size * m_size + y * m_size + x]
               .SetStatus(cnt == 3);
         }
-
       }
     }
-
     map_general_index = new_general_index;
+  }
+
+  void update(const sf::Event &event, const sf::View view) {
+    if (event.type == sf::Event::MouseButtonPressed &&
+        event.mouseButton.button == sf::Mouse::Right &&
+        Config::Get()->GetGameStatus() == Config::Type::pause) {
+
+      const auto point = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
+      const auto cast_throw_view =
+          graphic::Window::getWindow()->getRenderWindow().mapPixelToCoords(point, view);
+      const auto map = m_map_px_size;
+      auto res = map / 2 + cast_throw_view;
+      const auto x = static_cast<int>(res.x) / 64;
+      const auto y = static_cast<int>(res.y) / 64;
+
+      if (x >= 0 && x < m_size && y >= 0 && y < m_size)
+        mode = !m_data[map_general_index * m_size * m_size + y * m_size + x].IsAlive();
+
+      flag = true;
+
+    }
+    if (event.type == sf::Event::MouseMoved && flag &&
+        Config::Get()->GetGameStatus() == Config::Type::pause) {
+
+      const auto point = sf::Vector2i(event.mouseMove.x, event.mouseMove.y);
+      const auto cast_throw_view =
+          graphic::Window::getWindow()->getRenderWindow().mapPixelToCoords(point, view);
+      const auto map = m_map_px_size;
+      auto res = map / 2 + cast_throw_view;
+      const auto x = static_cast<int>(res.x) / 64;
+      const auto y = static_cast<int>(res.y) / 64;
+      if (x >= 0 && x < m_size && y >= 0 && y < m_size)
+        m_data[map_general_index * m_size * m_size + y * m_size + x].SetStatus(mode);
+    }
+    if (event.type == sf::Event::MouseButtonReleased &&
+        event.mouseButton.button == sf::Mouse::Right && flag) {
+      flag = false;
+    }
   }
 
   ~Map() {
@@ -215,6 +251,8 @@ class Map {
   int m_size;
   bool map_general_index{false};
   Block *m_data;
+  bool flag{false};
+  bool mode{false};
 };
 
 } // end namespace core
